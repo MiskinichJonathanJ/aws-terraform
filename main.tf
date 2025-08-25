@@ -121,3 +121,11 @@ resource "aws_vpc_security_group_egress_rule" "permitir_all_out_db" {
   cidr_ipv4   = "0.0.0.0/0"
   ip_protocol = "-1"
 }
+
+# Load Balancer
+resource "aws_lb" "load_balancing" {
+  name = "lb_application"
+  load_balancer_type = "application"
+  security_groups = [aws_security_group.web_sg.id]
+  subnets = [for  subnet in module.vpc.public_subnets : subnet]
+}
