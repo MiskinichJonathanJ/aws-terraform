@@ -40,7 +40,7 @@ resource "aws_nat_gateway" "nat_internet" {
 
 resource "aws_security_group" "web_sg" {
   name        = "web_sg"
-  description = "permitir el trafico http"
+  description = "permitir el trafico http/https"
   vpc_id      = module.vpc.vpc_id
   tags = {
     Name = "Web_sg"
@@ -67,6 +67,56 @@ resource "aws_vpc_security_group_ingress_rule" "permitir_https" {
 
 resource "aws_vpc_security_group_egress_rule" "permitir_http_out" {
   security_group_id = aws_security_group.web_sg.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
+}
+
+resource "aws_security_group" "app_sg" {
+  name        = "app_sg"
+  description = "permitir  comunicacion con web_sg"
+  vpc_id      = module.vpc.vpc_id
+  tags = {
+    Name = "APP_sg"
+  }
+}
+
+resource "aws_security_group_rule" "app_ingreso_from_web" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.app_sg.id
+  source_security_group_id = aws_security_group.web_sg.id
+}
+
+resource "aws_vpc_security_group_egress_rule" "permitir_all_out" {
+  security_group_id = aws_security_group.app_sg.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
+}
+
+resource "aws_security_group" "db_sg" {
+  name        = "db_sg"
+  description = "permitir  comunicacion con APP_sg"
+  vpc_id      = module.vpc.vpc_id
+  tags = {
+    Name = "DB_sg"
+  }
+}
+
+resource "aws_security_group_rule" "db_ingreso_from_app" {
+  type                     = "ingress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.db_sg.id
+  source_security_group_id = aws_security_group.app_sg.id
+}
+
+resource "aws_vpc_security_group_egress_rule" "permitir_all_out_db" {
+  security_group_id = aws_security_group.db_sg.id
 
   cidr_ipv4   = "0.0.0.0/0"
   ip_protocol = "-1"
