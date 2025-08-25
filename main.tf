@@ -15,7 +15,7 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
-#Consultar Informacion sobre AMI existentes
+#Traer ultima version de la AMI  de Ubuntu
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -33,7 +33,7 @@ data "aws_ami" "ubuntu" {
 resource "aws_eip" "para_NAT" {}
 
 resource "aws_nat_gateway" "nat_internet" {
-  allocation_id = aws_eip.para_NAT
+  allocation_id = aws_eip.para_NAT.id
   subnet_id     = module.vpc.public_subnets[0]
 
 }
@@ -108,8 +108,8 @@ resource "aws_security_group" "db_sg" {
 
 resource "aws_security_group_rule" "db_ingreso_from_app" {
   type                     = "ingress"
-  from_port                = 80
-  to_port                  = 80
+  from_port                = 3306
+  to_port                  = 3306
   protocol                 = "tcp"
   security_group_id        = aws_security_group.db_sg.id
   source_security_group_id = aws_security_group.app_sg.id
@@ -124,8 +124,81 @@ resource "aws_vpc_security_group_egress_rule" "permitir_all_out_db" {
 
 # Load Balancer
 resource "aws_lb" "load_balancing" {
-  name = "lb_application"
+  name               = "lbApplication"
   load_balancer_type = "application"
-  security_groups = [aws_security_group.web_sg.id]
-  subnets = [for  subnet in module.vpc.public_subnets : subnet]
+  security_groups    = [aws_security_group.web_sg.id]
+  subnets            = [for subnet in module.vpc.public_subnets : subnet]
+}
+
+#  Target  group
+resource "aws_lb_target_group" "app_tg" {
+  name     = "appLBtg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = module.vpc.vpc_id
+}
+
+#Listener
+resource "aws_lb_listener" "listener_lb_web" {
+  load_balancer_arn = aws_lb.load_balancing.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app_tg.arn
+  }
+}
+
+#Agregar Instancia  al Target  Group
+resource "aws_lb_target_group_attachment" "instancias_app_web" {
+  target_group_arn = aws_lb_target_group.app_tg.arn
+  target_id        = aws_instance.app_web_instancia.id
+  port             = 80
+}
+
+# Instancia  de  EC2
+resource "aws_instance" "app_web_instancia" {
+  instance_type   = "t3.micro"
+  ami             = data.aws_ami.ubuntu.id
+  subnet_id       = module.vpc.private_subnets[0]
+  security_groups = [aws_security_group.app_sg.id]
+
+  user_data = <<-EOF
+              #!/bin/bash
+              apt-get update -y
+              apt-get install -y apache2
+              systemctl start apache2
+              systemctl enable apache2
+              echo "<h1>Hola desde la app en EC2 con ALB</h1>" > /var/www/html/index.html
+              EOF
+
+  tags = {
+    Name = "APP_WEB"
+  }
+}
+
+#Instancia de RDS
+resource "aws_db_instance" "MyDB" {
+  allocated_storage      = 10
+  db_name                = "mydb"
+  engine                 = "mysql"
+  engine_version         = "8.0"
+  instance_class         = "db.t3.micro"
+  username               = "foo"
+  password               = "foobarbaz"
+  parameter_group_name   = "default.mysql8.0"
+  skip_final_snapshot    = true
+  db_subnet_group_name   = aws_db_subnet_group.subnet_db.name
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  multi_az               = true
+}
+
+resource "aws_db_subnet_group" "subnet_db" {
+  name       = "subnet_db"
+  subnet_ids = module.vpc.private_subnets
+
+  tags = {
+    Name = "My DB subnet group"
+  }
 }
