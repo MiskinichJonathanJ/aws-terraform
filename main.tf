@@ -2,7 +2,7 @@ provider "aws" {
   region = "us-west-2" # Set the AWS region to Oregon
 }
 
-module "pvc" {
+module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.19.0"
   name    = "vpc-MyCloud"
@@ -13,4 +13,61 @@ module "pvc" {
   public_subnets  = ["10.0.3.0/24", "10.0.4.0/24"]
 
   enable_dns_hostnames = true
+}
+
+#Consultar Informacion sobre AMI existentes
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  #Filtros para la busqueda  de la AMI
+  filter {
+    #Como es el nombre  del atributo por el que  vamos a filtrar
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+  }
+
+  #ID empresa canonical que es la oficial ne desarrollo Ubuntu
+  owners = ["099720109477"]
+}
+
+resource "aws_eip" "para_NAT" {}
+
+resource "aws_nat_gateway" "nat_internet" {
+  allocation_id = aws_eip.para_NAT
+  subnet_id     = module.vpc.public_subnets[0]
+
+}
+
+resource "aws_security_group" "web_sg" {
+  name        = "web_sg"
+  description = "permitir el trafico http"
+  vpc_id      = module.vpc.vpc_id
+  tags = {
+    Name = "Web_sg"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "permitir_http" {
+  security_group_id = aws_security_group.web_sg.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 80
+  ip_protocol = "tcp"
+  to_port     = 80
+}
+
+resource "aws_vpc_security_group_ingress_rule" "permitir_https" {
+  security_group_id = aws_security_group.web_sg.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 443
+  ip_protocol = "tcp"
+  to_port     = 443
+}
+
+resource "aws_vpc_security_group_egress_rule" "permitir_http_out" {
+  security_group_id = aws_security_group.web_sg.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "-1"
 }
