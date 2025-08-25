@@ -1,20 +1,16 @@
-terraform {
-  required_version = ">= 1.0.0" # Ensure that the Terraform version is 1.0.0 or higher
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws" # Specify the source of the AWS provider
-      version = "~> 4.0"        # Use a version of the AWS provider that is compatible with version
-    }
-  }
-}
-
 provider "aws" {
-  region = "us-east-1" # Set the AWS region to US East (N. Virginia)
+  region = "us-west-2" # Set the AWS region to Oregon
 }
 
-resource "aws_instance" "aws_example" {
-  tags = {
-    Name = "ExampleInstance" # Tag the instance with a Name tag for easier identification
-  }
+module "pvc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.19.0"
+  name    = "vpc-MyCloud"
+  cidr    = "10.0.0.0/16"
+
+  azs             = ["us-west-2a", "us-west-2b"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
+  public_subnets  = ["10.0.3.0/24", "10.0.4.0/24"]
+
+  enable_dns_hostnames = true
 }
