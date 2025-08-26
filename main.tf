@@ -12,6 +12,14 @@ module "vpc" {
   private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
   public_subnets  = ["10.0.3.0/24", "10.0.4.0/24"]
 
+  # NAT en alta disponibilidad
+  enable_nat_gateway     = true
+  single_nat_gateway     = false
+  one_nat_gateway_per_az = true
+
+  # IGW y DNS
+  create_igw           = true
+  enable_dns_support   = true
   enable_dns_hostnames = true
 }
 
@@ -28,75 +36,6 @@ data "aws_ami" "ubuntu" {
 
   #ID empresa canonical que es la oficial ne desarrollo Ubuntu
   owners = ["099720109477"]
-}
-
-# NAT  para las  instancias en subred publica
-resource "aws_eip" "para_NAT" {
-  domain = "vpc"
-}
-
-resource "aws_nat_gateway" "nat_internet" {
-  allocation_id = aws_eip.para_NAT.id
-  subnet_id     = module.vpc.public_subnets[0]
-
-}
-
-# GateWay de  Internet
-resource "aws_internet_gateway" "gw" {
-  vpc_id = module.vpc.vpc_id
-
-  tags = {
-    Name = "InternetGateWay"
-  }
-}
-
-# Rutas  para  las  subnets
-resource "aws_route_table" "public_rt" {
-  vpc_id = module.vpc.vpc_id
-
-  tags = {
-    Name = "public-rt"
-  }
-}
-
-resource "aws_route" "public_route" {
-  route_table_id         = aws_route_table.public_rt.id
-  destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_internet_gateway.gw.id
-}
-
-resource "aws_route_table_association" "publica_assoc_rt" {
-  route_table_id = aws_route_table.public_rt.id
-  subnet_id      = module.vpc.public_subnets[0]
-}
-
-resource "aws_route_table_association" "publica_assoc_rt_2" {
-  route_table_id = aws_route_table.public_rt.id
-  subnet_id      = module.vpc.public_subnets[1]
-}
-
-resource "aws_route_table" "private_rt" {
-  vpc_id = module.vpc.vpc_id
-
-  tags = {
-    Name = "private-rt"
-  }
-}
-
-resource "aws_route" "private-to-internet" {
-  route_table_id         = aws_route_table.private_rt.id
-  destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.nat_internet.id
-}
-
-resource "aws_route_table_association" "private_asociacion" {
-  route_table_id = aws_route_table.private_rt.id
-  subnet_id      = module.vpc.private_subnets[0]
-}
-
-resource "aws_route_table_association" "private_asociacion_2" {
-  route_table_id = aws_route_table.private_rt.id
-  subnet_id      = module.vpc.private_subnets[1]
 }
 
 
