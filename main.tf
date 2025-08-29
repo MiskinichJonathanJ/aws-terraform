@@ -1,7 +1,7 @@
 provider "aws" {
   region = var.region # Set the AWS region to Oregon
 }
-
+#GLOBAL
 locals {
   resource_prefix = "${var.project_name}-${var.environment}"
 
@@ -17,6 +17,7 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+#NET
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.19.0"
@@ -38,7 +39,7 @@ module "vpc" {
   enable_dns_hostnames = true
 }
 
-#Traer ultima version de la AMI  de Ubuntu
+#Traer ultima version de la AMI  de Ubuntu - GLOBAL O COMP?
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -53,7 +54,7 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"]
 }
 
-
+#SEC o  NET?
 resource "aws_security_group" "web_sg" {
   name        = "${local.resource_prefix}-web-sg"
   description = "permitir el trafico http/https"
