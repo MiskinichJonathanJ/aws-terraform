@@ -9,22 +9,13 @@ locals {
   })
 }
 
-# Load Balancer
+########### LOAD  BALANCER APP ####################
 resource "aws_lb" "load_balancing" {
   name               = "${local.resource_prefix}-lbApplication"
   load_balancer_type = "application"
   security_groups    = [var.security_groups_lb_id]
   subnets            = [var.subnets_publics_lb_id]
 }
-
-#  Target  group
-resource "aws_lb_target_group" "app_tg" {
-  name     = "${local.resource_prefix}-appLBtg"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id_net
-}
-
 #Listener
 resource "aws_lb_listener" "listener_lb_web" {
   load_balancer_arn = aws_lb.load_balancing.arn
@@ -36,15 +27,7 @@ resource "aws_lb_listener" "listener_lb_web" {
     target_group_arn = aws_lb_target_group.app_tg.arn
   }
 }
-
-#Agregar Instancia  al Target  Group
-resource "aws_lb_target_group_attachment" "instancias_app_web" {
-  target_group_arn = aws_lb_target_group.app_tg.arn
-  target_id        = aws_instance.app_web_instancia.id
-  port             = 80
-}
-
-# Instancia  de  EC2
+######### EC2 INSTANCE #################
 resource "aws_instance" "app_web_instancia" {
   instance_type = var.instance_type
   ami           = data.aws_ami.ubuntu.id
@@ -61,4 +44,17 @@ resource "aws_instance" "app_web_instancia" {
               EOF
 
   tags = local.default_tags
+}
+###########  TARGET GROUP ##################
+resource "aws_lb_target_group" "app_tg" {
+  name     = "${local.resource_prefix}-appLBtg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id_net
+}
+#Agregar Instancia  al Target  Group
+resource "aws_lb_target_group_attachment" "instancias_app_web" {
+  target_group_arn = aws_lb_target_group.app_tg.arn
+  target_id        = aws_instance.app_web_instancia.id
+  port             = 80
 }

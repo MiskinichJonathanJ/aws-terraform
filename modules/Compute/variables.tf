@@ -1,7 +1,38 @@
+###### INSTANCIAS EC2 #################
 variable "instance_type" {
   type        = string                     # The type of the variable, in this case a string
-  default     = "t2.micro"                 # Default value for the variable
+  default     = "t3.micro"                 # Default value for the variable
   description = "The type of EC2 instance" # Description of what this variable represents
+
+  validation {
+    condition     = contains(["t3.micro", "t3.small"], var.instance_type) #Solo  instancias  del plan gratuito
+    error_message = "Solo se permiten instancias del plan  gratuito: t3.micro, t3.small"
+  }
+}
+######## SECURITY GROUPS ###################
+variable "security_groups_app_id" {
+  type        = string
+  description = "Grupos de seguridad para las instancias EC2"
+}
+
+variable "security_groups_lb_id" {
+  type        = string
+  description = "Grupos de seguridad para el LB"
+}
+##### VPC Y SUBNETS ##########
+variable "vpc_id_net" {
+  type        = string
+  description = "Id  de la VPC de la Nube"
+}
+
+variable "subnet_id_instances_ec2" {
+  type        = string
+  description = "Id de la subnet privada para las Instancias EC2"
+}
+
+variable "subnets_publics_lb_id" {
+  type        = string
+  description = "Id de la Subnet publica para el Load Balance"
 }
 
 variable "project_name" {
@@ -46,27 +77,3 @@ variable "common_tags" {
   default     = {}
 }
 
-variable "security_groups_app_id" {
-  type        = string
-  description = "Grupos de seguridad para las instancias EC2"
-}
-
-variable "security_groups_lb_id" {
-  type        = string
-  description = "Grupos de seguridad para el LB"
-}
-
-variable "subnets_publics_lb_id" {
-  type        = string
-  description = "Id de la Subnet publica para el Load Balance"
-}
-
-variable "vpc_id_net" {
-  type        = string
-  description = "Id  de la VPC de la Nube"
-}
-
-variable "subnet_id_instances_ec2" {
-  type        = string
-  description = "Id de la subnet privada para las Instancias EC2"
-}
