@@ -1,14 +1,18 @@
 provider "aws" {
-  region = "us-west-2" # Set the AWS region to Oregon
+  region = var.region # Set the AWS region to Oregon
+}
+
+data "aws_availability_zones" "available" {
+  state = "available"
 }
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.19.0"
   name    = "vpc-MyCloud"
-  cidr    = "10.0.0.0/16"
+  cidr    = var.cidr_vpc
 
-  azs             = ["us-west-2a", "us-west-2b"]
+  azs             = slice(data.aws_availability_zones.available.names, 0, var.azs_count)
   private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
   public_subnets  = ["10.0.3.0/24", "10.0.4.0/24"]
 
@@ -160,7 +164,7 @@ resource "aws_lb_target_group_attachment" "instancias_app_web" {
 
 # Instancia  de  EC2
 resource "aws_instance" "app_web_instancia" {
-  instance_type   = "t3.micro"
+  instance_type   = var.instance_type
   ami             = data.aws_ami.ubuntu.id
   subnet_id       = module.vpc.private_subnets[0]
   security_groups = [aws_security_group.app_sg.id]
