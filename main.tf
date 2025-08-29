@@ -6,9 +6,9 @@ locals {
   resource_prefix = "${var.project_name}-${var.environment}"
 
   default_tags = merge(var.common_tags, {
-    Project = var.project_name
+    Project     = var.project_name
     Environment = var.environment
-    ManagedBy = "terraform"
+    ManagedBy   = "terraform"
     CreatedDate = formatdate("YYYY-MM-DD", timestamp())
   })
 }
@@ -58,7 +58,9 @@ resource "aws_security_group" "web_sg" {
   name        = "${local.resource_prefix}-web-sg"
   description = "permitir el trafico http/https"
   vpc_id      = module.vpc.vpc_id
-  tags = local.default_tags
+  tags        = merge(local.default_tags, {
+    Type  = "Security Group"
+  })
 }
 
 resource "aws_vpc_security_group_ingress_rule" "permitir_http" {
@@ -90,7 +92,9 @@ resource "aws_security_group" "app_sg" {
   name        = "${local.resource_prefix}-app-sg"
   description = "permitir  comunicacion con web_sg"
   vpc_id      = module.vpc.vpc_id
-  tags = local.default_tags
+  tags        = merge(local.default_tags, {
+    Type  = "Security Group"
+  })
 }
 
 resource "aws_security_group_rule" "app_ingreso_from_web" {
@@ -113,7 +117,9 @@ resource "aws_security_group" "db_sg" {
   name        = "${local.resource_prefix}-db-sg"
   description = "permitir  comunicacion con APP_sg"
   vpc_id      = module.vpc.vpc_id
-  tags = local.default_tags
+  tags        = merge(local.default_tags, {
+    Type  = "Security Group"
+  })
 }
 
 resource "aws_security_group_rule" "db_ingreso_from_app" {
@@ -186,6 +192,30 @@ resource "aws_instance" "app_web_instancia" {
   tags = local.default_tags
 }
 
+resource "aws_secretsmanager_secret" "db_password" {
+  name                    = "${local.resource_prefix}-db-password"
+  description             = "Creadenciales para RDS  MySQL"
+  recovery_window_in_days = 7
+
+  tags = merge(local.default_tags, {
+    Type = "db-credentials"
+  })
+}
+resource "random_password" "db_password" {
+  length  = 16
+  special = true
+
+  override_special = "!#$%&*()-=+[]{}<>:?"
+}
+
+resource "aws_secretsmanager_secret_version" "db_password" {
+  secret_id = aws_secretsmanager_secret.db_password.id
+  secret_string = jsonencode({
+    username = var.db_username
+    password = random_password.db_password.result
+  })
+}
+
 #Instancia de RDS
 resource "aws_db_instance" "MyDB" {
   allocated_storage      = 10
@@ -193,13 +223,19 @@ resource "aws_db_instance" "MyDB" {
   engine                 = "mysql"
   engine_version         = "8.0"
   instance_class         = var.instance_db_type
-  username               = "foo"
-  password               = "foobarbaz"
+  username               = var.db_username
+  password               = random_password.db_password.result
   parameter_group_name   = "default.mysql8.0"
   skip_final_snapshot    = true
   db_subnet_group_name   = aws_db_subnet_group.subnet_db.name
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   multi_az               = true
+
+  #Config securirty  and backup
+  backup_retention_period = var.db_backup_retention
+  backup_window          = "03:00-04:00"
+  maintenance_window     = "sun:04:00-sun:05:00"
+  storage_encrypted = true
 }
 
 resource "aws_db_subnet_group" "subnet_db" {
