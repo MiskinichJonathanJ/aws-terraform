@@ -192,13 +192,15 @@ resource "aws_instance" "app_web_instancia" {
 
   tags = local.default_tags
 }
-
+########
+# MODULO DATABASE
+########
 resource "aws_secretsmanager_secret" "db_password" {
   name                    = "${local.resource_prefix}-db-password"
   description             = "Creadenciales para RDS  MySQL"
   recovery_window_in_days = 7
 
-  tags = merge(local.default_tags, {
+  tags = merge(local.default_tags, {fis
     Type = "db-credentials"
   })
 }
@@ -240,8 +242,11 @@ resource "aws_db_instance" "MyDB" {
 }
 
 resource "aws_db_subnet_group" "subnet_db" {
-  name       = "${local.resource_prefix}-subnet_db"
+  name       = "${local.resource_prefix}-subnet-db"
   subnet_ids = module.vpc.private_subnets
 
   tags = local.default_tags
 }
+
+#######
+#######
