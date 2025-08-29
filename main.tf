@@ -2,6 +2,17 @@ provider "aws" {
   region = var.region # Set the AWS region to Oregon
 }
 
+locals {
+  resource_prefix = "${var.project_name}-${var.environment}"
+
+  default_tags = merge(var.common_tags, {
+    Project = var.project_name
+    Environment = var.environment
+    ManagedBy = "terraform"
+    CreatedDate = formatdate("YYYY-MM-DD", timestamp())
+  })
+}
+
 data "aws_availability_zones" "available" {
   state = "available"
 }
@@ -9,16 +20,16 @@ data "aws_availability_zones" "available" {
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.19.0"
-  name    = "vpc-MyCloud"
+  name    = "${local.resource_prefix}-vpc"
   cidr    = var.cidr_vpc
 
   azs             = slice(data.aws_availability_zones.available.names, 0, var.azs_count)
-  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
-  public_subnets  = ["10.0.3.0/24", "10.0.4.0/24"]
+  private_subnets = var.private_subnets_cidr
+  public_subnets  = var.public_subnets_cidr
 
   # NAT en alta disponibilidad
-  enable_nat_gateway     = true
-  single_nat_gateway     = false
+  enable_nat_gateway     = var.enable_nat_gateway
+  single_nat_gateway     = var.single_nat_gateway
   one_nat_gateway_per_az = true
 
   # IGW y DNS
@@ -44,18 +55,16 @@ data "aws_ami" "ubuntu" {
 
 
 resource "aws_security_group" "web_sg" {
-  name        = "web_sg"
+  name        = "${local.resource_prefix}-web-sg"
   description = "permitir el trafico http/https"
   vpc_id      = module.vpc.vpc_id
-  tags = {
-    Name = "Web_sg"
-  }
+  tags = local.default_tags
 }
 
 resource "aws_vpc_security_group_ingress_rule" "permitir_http" {
   security_group_id = aws_security_group.web_sg.id
 
-  cidr_ipv4   = "0.0.0.0/0"
+  cidr_ipv4   = var.allowed_cidr_blocks
   from_port   = 80
   ip_protocol = "tcp"
   to_port     = 80
@@ -64,7 +73,7 @@ resource "aws_vpc_security_group_ingress_rule" "permitir_http" {
 resource "aws_vpc_security_group_ingress_rule" "permitir_https" {
   security_group_id = aws_security_group.web_sg.id
 
-  cidr_ipv4   = "0.0.0.0/0"
+  cidr_ipv4   = var.allowed_cidr_blocks
   from_port   = 443
   ip_protocol = "tcp"
   to_port     = 443
@@ -73,17 +82,15 @@ resource "aws_vpc_security_group_ingress_rule" "permitir_https" {
 resource "aws_vpc_security_group_egress_rule" "permitir_http_out" {
   security_group_id = aws_security_group.web_sg.id
 
-  cidr_ipv4   = "0.0.0.0/0"
+  cidr_ipv4   = var.allowed_cidr_blocks
   ip_protocol = "-1"
 }
 
 resource "aws_security_group" "app_sg" {
-  name        = "app_sg"
+  name        = "${local.resource_prefix}-app-sg"
   description = "permitir  comunicacion con web_sg"
   vpc_id      = module.vpc.vpc_id
-  tags = {
-    Name = "APP_sg"
-  }
+  tags = local.default_tags
 }
 
 resource "aws_security_group_rule" "app_ingreso_from_web" {
@@ -98,17 +105,15 @@ resource "aws_security_group_rule" "app_ingreso_from_web" {
 resource "aws_vpc_security_group_egress_rule" "permitir_all_out" {
   security_group_id = aws_security_group.app_sg.id
 
-  cidr_ipv4   = "0.0.0.0/0"
+  cidr_ipv4   = var.allowed_cidr_blocks
   ip_protocol = "-1"
 }
 
 resource "aws_security_group" "db_sg" {
-  name        = "db_sg"
+  name        = "${local.resource_prefix}-db-sg"
   description = "permitir  comunicacion con APP_sg"
   vpc_id      = module.vpc.vpc_id
-  tags = {
-    Name = "DB_sg"
-  }
+  tags = local.default_tags
 }
 
 resource "aws_security_group_rule" "db_ingreso_from_app" {
@@ -123,13 +128,13 @@ resource "aws_security_group_rule" "db_ingreso_from_app" {
 resource "aws_vpc_security_group_egress_rule" "permitir_all_out_db" {
   security_group_id = aws_security_group.db_sg.id
 
-  cidr_ipv4   = "0.0.0.0/0"
+  cidr_ipv4   = var.allowed_cidr_blocks
   ip_protocol = "-1"
 }
 
 # Load Balancer
 resource "aws_lb" "load_balancing" {
-  name               = "lbApplication"
+  name               = "${local.resource_prefix}-lbApplication"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.web_sg.id]
   subnets            = [for subnet in module.vpc.public_subnets : subnet]
@@ -137,7 +142,7 @@ resource "aws_lb" "load_balancing" {
 
 #  Target  group
 resource "aws_lb_target_group" "app_tg" {
-  name     = "appLBtg"
+  name     = "${local.resource_prefix}-appLBtg"
   port     = 80
   protocol = "HTTP"
   vpc_id   = module.vpc.vpc_id
@@ -178,18 +183,16 @@ resource "aws_instance" "app_web_instancia" {
               echo "<h1>Hola desde la app en EC2 con ALB</h1>" > /var/www/html/index.html
               EOF
 
-  tags = {
-    Name = "APP_WEB"
-  }
+  tags = local.default_tags
 }
 
 #Instancia de RDS
 resource "aws_db_instance" "MyDB" {
   allocated_storage      = 10
-  db_name                = "mydb"
+  db_name                = "${local.resource_prefix}-mydb"
   engine                 = "mysql"
   engine_version         = "8.0"
-  instance_class         = "db.t3.micro"
+  instance_class         = var.instance_db_type
   username               = "foo"
   password               = "foobarbaz"
   parameter_group_name   = "default.mysql8.0"
@@ -200,10 +203,8 @@ resource "aws_db_instance" "MyDB" {
 }
 
 resource "aws_db_subnet_group" "subnet_db" {
-  name       = "subnet_db"
+  name       = "${local.resource_prefix}-subnet_db"
   subnet_ids = module.vpc.private_subnets
 
-  tags = {
-    Name = "My DB subnet group"
-  }
+  tags = local.default_tags
 }

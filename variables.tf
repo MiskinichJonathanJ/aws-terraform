@@ -2,6 +2,11 @@ variable "instance_type" {
   type        = string                     # The type of the variable, in this case a string
   default     = "t3.micro"                 # Default value for the variable
   description = "The type of EC2 instance" # Description of what this variable represents
+
+  validation {
+    condition     = contains(["t3.micro", "t3.small"], var.instance_type) #Solo  instancias  del plan gratuito
+    error_message = "Solo se permiten instancias del plan  gratuito: t3.micro, t3.small"
+  }
 }
 
 variable "region" {
@@ -57,6 +62,11 @@ variable "azs_count" {
 variable "project_name" {
   type        = string
   description = "Nombre para el proyecto actual."
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.project_name))
+    error_message = "El nombre del proyecto debe ser lowercase,  empezar y terminar con letra."
+  }
 }
 
 variable "private_subnets_cidr" {
@@ -102,5 +112,45 @@ variable "db_backup_retention" {
   validation {
     condition     = var.db_backup_retention >= 1 && var.db_backup_retention <= 30
     error_message = "El periodo de  retencion debe  ser  entre  1  y 30 dias"
+  }
+}
+
+variable "common_tags" {
+  type        = map(string)
+  description = "Tags comunes aplicados a todos los recursos"
+  default     = {}
+}
+
+variable "enable_deletion_protection" {
+  type        = bool
+  description = "Habilitar protección contra eliminación para recursos críticos"
+  default     = false
+}
+
+variable "enable_nat_gateway" {
+  type        = bool
+  description = "Habilitar NAT Gateway para conectividad saliente desde subnets privadas"
+  default     = true
+}
+
+variable "single_nat_gateway" {
+  type        = bool
+  description = "Usar un solo NAT Gateway (reduce costos pero elimina redundancia)"
+  default     = false
+
+  validation {
+    condition     = !var.single_nat_gateway || var.enable_nat_gateway
+    error_message = "single_nat_gateway requiere que enable_nat_gateway sea true"
+  }
+}
+
+variable "instance_db_type" {
+  type = string
+  description = "Tipo de instancia de la base de datos"
+  default = "db.t3.micro"
+
+  validation {
+    condition = contains(["db.t3.micro", "db.t4g.micro"], var.instance_db_type)
+    error_message = "Solo se permiten instancias del plan  gratuito: db.t3.micro  o db.t4g.micro"
   }
 }
