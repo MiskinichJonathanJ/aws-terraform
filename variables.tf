@@ -92,14 +92,12 @@ variable "public_subnets_cidr" {
 }
 
 variable "allowed_cidr_blocks" {
-  type        = list(string)
+  type        = string
   description = "Bloques de CIDR para el  trafico HTTP/HTTPS"
-  default     = ["0.0.0.0/0"]
+  default     = "0.0.0.0/0"
 
   validation {
-    condition = alltrue(
-      [for cidr in var.allowed_cidr_blocks : can(cidrhost(cidr, 0))]
-    )
+    condition = can(cidrhost(var.allowed_cidr_blocks, 0))
     error_message = "El bloque de CIDR  debe ser valido"
   }
 }

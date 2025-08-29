@@ -59,8 +59,8 @@ resource "aws_security_group" "web_sg" {
   name        = "${local.resource_prefix}-web-sg"
   description = "permitir el trafico http/https"
   vpc_id      = module.vpc.vpc_id
-  tags        = merge(local.default_tags, {
-    Type  = "Security Group"
+  tags = merge(local.default_tags, {
+    Type = "Security Group"
   })
 }
 
@@ -93,8 +93,8 @@ resource "aws_security_group" "app_sg" {
   name        = "${local.resource_prefix}-app-sg"
   description = "permitir  comunicacion con web_sg"
   vpc_id      = module.vpc.vpc_id
-  tags        = merge(local.default_tags, {
-    Type  = "Security Group"
+  tags = merge(local.default_tags, {
+    Type = "Security Group"
   })
 }
 
@@ -118,8 +118,8 @@ resource "aws_security_group" "db_sg" {
   name        = "${local.resource_prefix}-db-sg"
   description = "permitir  comunicacion con APP_sg"
   vpc_id      = module.vpc.vpc_id
-  tags        = merge(local.default_tags, {
-    Type  = "Security Group"
+  tags = merge(local.default_tags, {
+    Type = "Security Group"
   })
 }
 
@@ -200,7 +200,7 @@ resource "aws_secretsmanager_secret" "db_password" {
   description             = "Creadenciales para RDS  MySQL"
   recovery_window_in_days = 7
 
-  tags = merge(local.default_tags, {fis
+  tags = merge(local.default_tags, {
     Type = "db-credentials"
   })
 }
@@ -236,9 +236,9 @@ resource "aws_db_instance" "MyDB" {
 
   #Config securirty  and backup
   backup_retention_period = var.db_backup_retention
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "sun:04:00-sun:05:00"
-  storage_encrypted = true
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "sun:04:00-sun:05:00"
+  storage_encrypted       = true
 }
 
 resource "aws_db_subnet_group" "subnet_db" {
