@@ -145,12 +145,18 @@ variable "single_nat_gateway" {
 }
 
 variable "instance_db_type" {
-  type = string
+  type        = string
   description = "Tipo de instancia de la base de datos"
-  default = "db.t3.micro"
+  default     = "db.t3.micro"
 
   validation {
-    condition = contains(["db.t3.micro", "db.t4g.micro"], var.instance_db_type)
+    condition     = contains(["db.t3.micro", "db.t4g.micro"], var.instance_db_type)
     error_message = "Solo se permiten instancias del plan  gratuito: db.t3.micro  o db.t4g.micro"
   }
+}
+
+variable "db_username" {
+  type        = string
+  description = "Nombre de usuario de la DB"
+  default     = "dbadmin"
 }
