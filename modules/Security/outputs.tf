@@ -1,4 +1,14 @@
-output "instance_public_ip" {
-  value       = ""                                          # The actual value to be outputted
-  description = "The public IP address of the EC2 instance" # Description of what this output represents
+output "id_web_security_group" {
+  value = aws_security_group.web_sg.id
+  description = "ID del grupo de seguridad para capa web"
+}
+
+output "id_app_security_group" {
+  value = aws_security_group.app_sg.id
+  description = "ID del grupo de seguridad para capa App"
+}
+
+output "id_db_security_group" {
+  value = aws_security_group.db_sg.id
+  description = "ID del grupo de seguridad para capa base de datos"
 }
