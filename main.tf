@@ -27,11 +27,11 @@ module "database" {
   project_name = var.project_name
   allowed_environments = var.allowed_environments
   common_tags = var.common_tags
+  db_username = var.db_username
 
   #DEPENDENCIAS
   subnets_private_ids = module.networking.subnets_privates_ids
   vpc_security_groups_ids = module.security.id_db_security_group
-
 }
 module "compute" {
   source = "modules/Compute"

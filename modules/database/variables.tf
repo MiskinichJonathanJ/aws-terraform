@@ -18,7 +18,7 @@ variable "common_tags" {
 variable "db_username" {
   type        = string
   description = "Nombre de usuario de la DB"
-  default     = "dbadmin"
+  sensitive = true
 }
 variable "subnets_private_ids" {
   type        = list(string)
