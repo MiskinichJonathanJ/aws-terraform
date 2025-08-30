@@ -46,46 +46,20 @@ variable "single_nat_gateway" {
     error_message = "single_nat_gateway requiere que enable_nat_gateway sea true"
   }
 }
-########## REGION Y AZS #################
+########## GLOBAL #################
 variable "azs_count" {
   type        = number
-  description = "Cantidad de AZ para ejecutar los servicios."
-  default     = 2
-
-  validation {
-    condition     = var.azs_count >= 1 && var.azs_count < 4
-    error_message = "Las cantidad de AZ debe ser mayor  o  igual a 1 o  menor a 4" #Mas de 4 AZ costos sin sentidos.
-  }
+  description = "Cantidad de AZ para ejecutar los servicios.(Global)"
 }
-
-
 variable "allowed_environments" {
   type        = list(string)
-  description = "Tipos de entornos  validos"
-  default     = ["dev", "stagging", "prod"]
-
-  validation {
-    condition     = length(var.allowed_environments) > 0 && length(var.allowed_environments) <= 10
-    error_message = "La  cantidad  de entornor  debe  ser entre 1 y 10"
-  }
+  description = "Tipos de entornos  validos (Global)"
 }
-
 variable "environment" {
   type        = string
-  description = "Entorno de despliegue (dev, stagging, prod)"
-  default     = "dev"
-
-  validation {
-    condition     = contains(var.allowed_environments, var.environment)
-    error_message = "Environment debe ser uno definidos en allowed_environments"
-  }
+  description = "Entorno de despliegue (Global)"
 }
 variable "project_name" {
   type        = string
-  description = "Nombre para el proyecto actual."
-
-  validation {
-    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.project_name))
-    error_message = "El nombre del proyecto debe ser lowercase,  empezar y terminar con letra."
-  }
+  description = "Nombre para el proyecto actual.(Global)"
 }
