@@ -14,7 +14,7 @@ resource "aws_lb" "load_balancing" {
   name               = "${local.resource_prefix}-lbApplication"
   load_balancer_type = "application"
   security_groups    = [var.security_groups_lb_id]
-  subnets            = [var.subnets_publics_lb_id]
+  subnets            = var.subnets_publics_ids
 }
 #Listener
 resource "aws_lb_listener" "listener_lb_web" {
@@ -27,12 +27,11 @@ resource "aws_lb_listener" "listener_lb_web" {
     target_group_arn = aws_lb_target_group.app_tg.arn
   }
 }
-######### EC2 INSTANCE #################
-resource "aws_instance" "app_web_instancia" {
+######### AUTO SCALING #################
+resource "aws_launch_template" "template_instance_EC2" {
+  name_prefix   = local.resource_prefix
+  image_id      = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
-  ami           = data.aws_ami.ubuntu.id
-  subnet_id     = var.subnet_id_instances_ec2
-  security_groups = [var.security_groups_app_id]
 
   user_data = <<-EOF
               #!/bin/bash
@@ -42,8 +41,17 @@ resource "aws_instance" "app_web_instancia" {
               systemctl enable apache2
               echo "<h1>Hola desde la app en EC2 con ALB</h1>" > /var/www/html/index.html
               EOF
-
-  tags = local.default_tags
+}
+resource "aws_autoscaling_group" "autoscaling_app" {
+  max_size            = 2
+  min_size            = 1
+  desired_capacity    = 1
+  vpc_zone_identifier = var.subnet_id_privates
+  launch_template {
+    id      = aws_launch_template.template_instance_EC2.id
+    version = "$Latest"
+  }
+  target_group_arns = [aws_lb_target_group.app_tg.arn]
 }
 ###########  TARGET GROUP ##################
 resource "aws_lb_target_group" "app_tg" {
@@ -51,10 +59,4 @@ resource "aws_lb_target_group" "app_tg" {
   port     = 80
   protocol = "HTTP"
   vpc_id   = var.vpc_id_net
-}
-#Agregar Instancia  al Target  Group
-resource "aws_lb_target_group_attachment" "instancias_app_web" {
-  target_group_arn = aws_lb_target_group.app_tg.arn
-  target_id        = aws_instance.app_web_instancia.id
-  port             = 80
 }

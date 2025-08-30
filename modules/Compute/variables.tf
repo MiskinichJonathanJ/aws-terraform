@@ -25,14 +25,14 @@ variable "vpc_id_net" {
   description = "Id  de la VPC de la Nube"
 }
 
-variable "subnet_id_instances_ec2" {
-  type        = string
-  description = "Id de la subnet privada para las Instancias EC2"
+variable "subnet_id_privates" {
+  type        = list(string)
+  description = "Id de la subnets privadas"
 }
 
-variable "subnets_publics_lb_id" {
-  type        = string
-  description = "Id de la Subnet publica para el Load Balance"
+variable "subnets_publics_ids" {
+  type        = list(string)
+  description = "Id de la Subnets publicas"
 }
 
 variable "project_name" {
