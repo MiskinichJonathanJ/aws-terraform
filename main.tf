@@ -139,6 +139,10 @@ resource "aws_vpc_security_group_egress_rule" "permitir_all_out_db" {
   ip_protocol = "-1"
 }
 
+###################################################
+###################################################
+###################################################
+
 # Load Balancer
 resource "aws_lb" "load_balancing" {
   name               = "${local.resource_prefix}-lbApplication"
