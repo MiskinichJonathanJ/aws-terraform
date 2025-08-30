@@ -43,9 +43,9 @@ resource "aws_launch_template" "template_instance_EC2" {
               EOF
 }
 resource "aws_autoscaling_group" "autoscaling_app" {
-  max_size            = 2
-  min_size            = 1
-  desired_capacity    = 1
+  max_size            = var.max_size_instances
+  min_size            = var.min_size_instances
+  desired_capacity    = var.desired_size_instances
   vpc_zone_identifier = var.subnet_id_privates
   launch_template {
     id      = aws_launch_template.template_instance_EC2.id

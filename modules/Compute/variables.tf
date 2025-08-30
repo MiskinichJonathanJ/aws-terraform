@@ -9,6 +9,36 @@ variable "instance_type" {
     error_message = "Solo se permiten instancias del plan  gratuito: t3.micro, t3.small"
   }
 }
+variable "max_size_instances" {
+  type        = number
+  description = "Numero de instancias maximas a tener en la Infraestructura"
+  default     = 2
+
+  validation {
+    condition     = var.max_size_instances >= 1
+    error_message = "El maximo de instancias debe ser mayor o  igual a 1"
+  }
+}
+variable "min_size_instances" {
+  type        = number
+  description = "Numero de instancias minimas a tener en la Infraestructura"
+  default     = 1
+
+  validation {
+    condition     = var.min_size_instances >= 1
+    error_message = "El minimo de instancias debe ser mayor o  igual a 1"
+  }
+}
+variable "desired_size_instances" {
+  type        = number
+  description = "Numero de instancias maximas a tener en la Infraestructura"
+  default     = 1
+
+  validation {
+    condition     = var.desired_size_instances >= 1
+    error_message = "El ideal de instancias debe ser mayor o  igual a 1"
+  }
+}
 ######## SECURITY GROUPS ###################
 variable "security_groups_app_id" {
   type        = string
