@@ -63,3 +63,7 @@ variable "project_name" {
   type        = string
   description = "Nombre para el proyecto actual.(Global)"
 }
+variable "common_tags" {
+  type        = map(string)
+  description = "Tags comunes aplicados a todos los recursos (Global)"
+}

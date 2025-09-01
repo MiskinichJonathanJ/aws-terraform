@@ -27,9 +27,9 @@ variable "db_backup_retention" {
   }
 }
 variable "db_username" {
-  type = string
+  type        = string
   description = "Nombre de  usuario de la base de datos"
-  sensitive = true
+  sensitive   = true
 }
 variable "azs_count" {
   type        = number

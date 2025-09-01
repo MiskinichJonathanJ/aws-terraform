@@ -35,7 +35,7 @@ resource "aws_secretsmanager_secret_version" "db_password" {
 
 resource "aws_db_instance" "MyDB" {
   allocated_storage      = 10
-  db_name                = "${local.resource_prefix}-mydb"
+  db_name                = replace("${local.resource_prefix}mydb", "-", "")
   engine                 = "mysql"
   engine_version         = "8.0"
   instance_class         = var.instance_db_type
