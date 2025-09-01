@@ -26,6 +26,11 @@ variable "db_backup_retention" {
     error_message = "El periodo de  retencion debe  ser  entre  1  y 30 dias"
   }
 }
+variable "db_username" {
+  type        = string
+  description = "Nombre de  usuario de la base de datos"
+  sensitive   = true
+}
 variable "azs_count" {
   type        = number
   description = "Cantidad de AZ para ejecutar los servicios."
@@ -38,7 +43,6 @@ variable "azs_count" {
 variable "max_size_instances" {
   type        = number
   description = "Numero de instancias maximas a tener en la Infraestructura"
-  default     = 2
 
   validation {
     condition     = var.max_size_instances >= 1 && var.max_size_instances < 10
@@ -48,7 +52,6 @@ variable "max_size_instances" {
 variable "min_size_instances" {
   type        = number
   description = "Numero de instancias minimas a tener en la Infraestructura"
-  default     = 1
 
   validation {
     condition     = var.min_size_instances >= 1
@@ -58,11 +61,10 @@ variable "min_size_instances" {
 variable "desired_size_instances" {
   type        = number
   description = "Numero de instancias maximas a tener en la Infraestructura"
-  default     = 1
 
   validation {
-    condition     = var.desired_size_instances >= 1 && var.desired_size_instances < 10
-    error_message = "El ideal de instancias debe ser mayor o  igual a 1 y menor a 10"
+    condition     = var.desired_size_instances >= var.min_size_instances && var.desired_size_instances <= var.max_size_instances
+    error_message = "El ideal de instancias debe estar entre  el minimo y el maximo de instancias"
   }
 }
 

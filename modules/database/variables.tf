@@ -18,17 +18,14 @@ variable "common_tags" {
 variable "db_username" {
   type        = string
   description = "Nombre de usuario de la DB"
-  default     = "dbadmin"
+  sensitive = true
 }
 variable "subnets_private_ids" {
   type        = list(string)
   description = "CIDRs de las subnets privadas"
-
   validation {
-    condition = alltrue([
-      for cidr in var.subnets_private_ids : can(cidrhost(cidr, 0))
-    ])
-    error_message = "Debe proporcionar un CIDR valido"
+    condition     = length(var.subnets_private_ids) > 0
+    error_message = "Debe proporcionar al menos un ID de subnet privada"
   }
 }
 variable "db_backup_retention" {

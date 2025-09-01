@@ -33,7 +33,7 @@ resource "aws_launch_template" "template_instance_EC2" {
   image_id      = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
 
-  user_data = <<-EOF
+  user_data = base64encode(<<-EOF
               #!/bin/bash
               apt-get update -y
               apt-get install -y apache2
@@ -41,6 +41,7 @@ resource "aws_launch_template" "template_instance_EC2" {
               systemctl enable apache2
               echo "<h1>Hola desde la app en EC2 con ALB</h1>" > /var/www/html/index.html
               EOF
+  )
 }
 resource "aws_autoscaling_group" "autoscaling_app" {
   max_size            = var.max_size_instances

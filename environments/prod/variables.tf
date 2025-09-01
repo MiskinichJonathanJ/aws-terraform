@@ -1,0 +1,105 @@
+######## VARIABLES QUE CAMBIAN CON ENTORNO ##################
+variable "instance_type" {
+  type        = string                     # The type of the variable, in this case a string
+  description = "The type of EC2 instance" # Description of what this variable represents
+
+  validation {
+    condition     = contains(["t3.micro", "t3.small"], var.instance_type) #Solo  instancias  del plan gratuito
+    error_message = "Solo se permiten instancias del plan  gratuito: t3.micro, t3.small"
+  }
+}
+variable "instance_db_type" {
+  type        = string
+  description = "Tipo de instancia de la base de datos"
+
+  validation {
+    condition     = contains(["db.t3.micro", "db.t4g.micro"], var.instance_db_type)
+    error_message = "Solo se permiten instancias del plan  gratuito: db.t3.micro  o db.t4g.micro"
+  }
+}
+variable "db_backup_retention" {
+  type        = number
+  description = "Numero de dias que se retiene el  backup  en la base de  datos"
+
+  validation {
+    condition     = var.db_backup_retention >= 1 && var.db_backup_retention <= 30
+    error_message = "El periodo de  retencion debe  ser  entre  1  y 30 dias"
+  }
+}
+variable "db_username" {
+  type        = string
+  description = "Nombre de  usuario de la base de datos"
+  sensitive   = true
+}
+variable "azs_count" {
+  type        = number
+  description = "Cantidad de AZ para ejecutar los servicios."
+
+  validation {
+    condition     = var.azs_count >= 1 && var.azs_count < 4
+    error_message = "Las cantidad de AZ debe ser mayor  o  igual a 1 o  menor a 4" #Mas de 4 AZ costos sin sentidos.
+  }
+}
+variable "max_size_instances" {
+  type        = number
+  description = "Numero de instancias maximas a tener en la Infraestructura"
+
+  validation {
+    condition     = var.max_size_instances >= 1 && var.max_size_instances < 10
+    error_message = "El maximo de instancias debe ser mayor o  igual a 1 y  menor a  10"
+  }
+}
+variable "min_size_instances" {
+  type        = number
+  description = "Numero de instancias minimas a tener en la Infraestructura"
+
+  validation {
+    condition     = var.min_size_instances >= 1
+    error_message = "El minimo de instancias debe ser mayor o  igual a 1"
+  }
+}
+variable "desired_size_instances" {
+  type        = number
+  description = "Numero de instancias maximas a tener en la Infraestructura"
+
+  validation {
+    condition     = var.desired_size_instances >= var.min_size_instances && var.desired_size_instances <= var.max_size_instances
+    error_message = "El ideal de instancias debe estar entre  el minimo y el maximo de instancias"
+  }
+}
+
+######## VARIABLES QUE CAMBIAN CON PROYECTO ################
+variable "allowed_environments" {
+  type        = list(string)
+  description = "Tipos de entornos  validos"
+  default     = ["dev", "stagging", "prod"]
+
+  validation {
+    condition     = length(var.allowed_environments) > 0 && length(var.allowed_environments) <= 10
+    error_message = "La  cantidad  de entornor  debe  ser entre 1 y 10"
+  }
+}
+
+variable "environment" {
+  type        = string
+  description = "Entorno de despliegue (dev, stagging, prod)"
+
+  validation {
+    condition     = contains(var.allowed_environments, var.environment)
+    error_message = "Environment debe ser uno definidos en allowed_environments"
+  }
+}
+variable "common_tags" {
+  type        = map(string)
+  description = "Tags comunes aplicados a todos los recursos"
+  default     = {}
+}
+variable "project_name" {
+  type        = string
+  description = "Nombre para el proyecto actual."
+
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]*[a-z0-9]$", var.project_name))
+    error_message = "El nombre del proyecto debe ser lowercase,  empezar y terminar con letra."
+  }
+}
