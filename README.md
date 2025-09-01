@@ -371,9 +371,9 @@ El diseño modular permite extensión y modificación fácil:
 ## 📞 Información de Contacto
 
 **Autor**: Jonathan Miskinich  
-**Email**: (Email)[miskinich.jobs.jonathan@gmail.com]  
-**LinkedIn**: (Link de LinkedIn)[www.linkedin.com/in/jonathan-miskinich-cloudsecurity]  
-**GitHub**: [github.com/MiskinichJonathanJ]
+**Email**: [Send Email](miskinich.jobs.jonathan@gmail.com)  
+**LinkedIn**: [Perfil  de LinkedIn](www.linkedin.com/in/jonathan-miskinich-cloudsecurity)  
+**GitHub**: [Perfil de GitHub](github.com/MiskinichJonathanJ)
 
 ---
 
